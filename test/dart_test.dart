@@ -2,6 +2,7 @@ import 'package:test/test.dart' as test;
 import 'package:dart.smtp/smtp.dart' as smtp;
 import 'package:tiny_parser/parser.dart' as tiny;
 import 'dart:convert' show utf8;
+import 'dart:async' show Future;
 
 void main() {
   test.group('A group of tests', () {
@@ -39,6 +40,25 @@ void main() {
         smtp.SmtpMessage message = await smtp.SmtpMessage.decode(parser);
         test.expect(message.value, "");
         test.expect(message.action, "quit");
+    });
+
+    test.test('\r\n.\r\n', () async {
+        tiny.ParserReader reader = new tiny.ParserByteBuffer.fromList(utf8.encode("xxxx\r\nyyyy\r\n.\r\nxx"), true);
+        tiny.TinyParser parser = new tiny.TinyParser(reader);
+        List<int> data = await smtp.SmtpMessage.decodeDataContent(parser);
+        test.expect(utf8.decode(data), "xxxx\r\nyyyy");
+    });
+    
+    test.test('ZZZ', () async {
+      tiny.ParserByteBuffer reader = new tiny.ParserByteBuffer();
+      tiny.TinyParser parser = new tiny.TinyParser(reader);
+      
+      smtp.SmtpMessage message;
+      smtp.SmtpMessage.decode(parser).then((m){message = m;});
+      reader.addBytes(utf8.encode("HELO google.com\r\n"));
+      await new Future((){});
+      test.expect(message.value, "google.com");
+      test.expect(message.action, "helo");
     });
   });
 }

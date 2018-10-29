@@ -14,7 +14,6 @@ class SmtpMessage {
   SmtpMessage(){
   }
 
-
   static Future<SmtpMessage> decode(TinyParser parser) async {
     try {
       parser.push();
@@ -104,41 +103,40 @@ class SmtpMessage {
     return utf8.decode(await parser.buffer.getBytes(index,parser.index-index),allowMalformed: true);
   }
 
-  static Future<List<int>> decodeExceptDot(TinyParser parser) async {
-    List<int> tmp = List<int>(3);
-    List<int> expect = utf8.encode("\r\n.");
+  static Future<List<int>> decodeDataContent(TinyParser parser) async {
+    List<int> tmp = List<int>(5);
     int start = parser.index;
     int end = start;
     try {
       parser.push();
       do {
-        if(!parser.hasBuffer(3)) {
-          parser.waitByBuffered(3);
-        }
-        parser.readBytes(3, tmp, moveOffset: false);
-        if(tmp[0] == expect[0] && tmp[1] == expect[1]&& tmp[2] == expect[2]) {
+        if(!parser.hasBuffer(5)) {
+          await parser.waitByBuffered(5);
+        } 
+        parser.readBytesSync(5, tmp, moveOffset: false);
+        if(tmp[0] == 0x0d && tmp[1] == 0x0a && tmp[2] == 0x2e
+          && tmp[3] == 0x0d && tmp[4] == 0x0a) {
           break;
-        } else {
-          parser.getBytes(1, moveOffset: true);
-        }
-      }while(true);
+        } 
+        parser.moveOffset(1);
+      } while(true);
       parser.pop();
       end = parser.index;
+      parser.resetIndex(start);
+      return parser.getBytes(end-start);
     } catch (e){
       parser.back();
       parser.pop();
       throw e;
     } 
-    parser.resetIndex(start);
-    return parser.getBytes(end-start);
   }
 
-  static Stream<List<int>> decodeExceptDotStream(TinyParser parser) {
+  static Stream<List<int>> decodeDotaStream(TinyParser parser) {
     StreamController<List<int>> controller = new StreamController<List<int>>();
     new Future(() async{
       while(true) {
         try {
-          await parser.nextString("\r\n.");
+          await parser.nextString("\r\n.\r\n");
           controller.close();
           break;
         } catch(e){
