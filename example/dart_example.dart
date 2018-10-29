@@ -1,7 +1,7 @@
 //import 'package:dart/dart.dart';
 import 'package:dart.smtp/smtp.dart';
 import 'dart:io' as io;
-import 'dart:async' show Stream;
+import 'dart:async' show Stream, Future;
 import 'package:tiny_parser/parser.dart' as p;
 import 'dart:convert' show utf8; 
 
@@ -31,7 +31,7 @@ class SmtpSocket {
 
   void add(List<int> data) { socket.add(data);}
 
-
+  Future<dynamic> close() { return socket.close();}
 }
 
 class SmtpSession {
@@ -45,6 +45,7 @@ class SmtpSession {
   String hostname;
   String fromAddress;
   String toAddress;
+  List<int> data;
 
 
   SmtpSession(this.socket,{this.domainName:"kyorohiro.info"}) {
@@ -56,57 +57,66 @@ class SmtpSession {
   }
 
   start() async {
-    socket.add(utf8.encode("220 ${domainName} SMTP dart.smtp@kyorohiro\r\n"));
-    do {
-      SmtpCommand message = SmtpCommand("none","");
-      try {
-        message = await SmtpCommand.decode(parser);
-      } catch(e){
-      }
-      print("##"+message.name);
-      switch(message.name){
-        case "helo":
-          channelIsOpen = false;
-          hostname = message.value.trim();
-          if(hostname.length > 0){
-            channelIsOpen = true;
-            socket.add(utf8.encode("250 ok ${domainName}\r\n"));
-          } else {
-            socket.add(utf8.encode("501 Syntax error\r\n"));
-          }
-          break;
-        case "quit":
-          this.channelIsOpen = false;
-          socket.add(utf8.encode("250 ok\r\n"));
-          break;
-        case "mail":
-          if(message.valueFromKey("from").length > 0){
-            this.fromAddress = message.valueFromKey("from");
-            socket.add(utf8.encode("250 ok ${this.fromAddress}\r\n"));
-          } else {
-            socket.add(utf8.encode("501 Syntax error\r\n"));
-          }
-          break;
-        case "rcpt":
-          if(message.valueFromKey("to").length > 0){
-            this.toAddress = message.valueFromKey("to");
-            socket.add(utf8.encode("250 ok ${this.toAddress}\r\n"));
-          } else {
-            socket.add(utf8.encode("501 Syntax error\r\n"));
-          }
-          break;
-        case "data":
-          socket.add(utf8.encode("354 End data with <CR><LF>.<CR><LF>\r\n"));
-          SmtpDataCommand.decodeDataContent(parser);
-          break;
-        case "none":
-          socket.add(utf8.encode("500 Syntax error, command unrecognized\r\n"));
-          break;
-        default:
-          socket.add(utf8.encode("502 Command not implemented\r\n"));          
-          break;
-      }
-    } while(true);
+    try {
+      socket.add(utf8.encode("220 ${domainName} SMTP dart.smtp@kyorohiro\r\n"));
+      await loop();
+    } finally {
+      socket.close();
+    }
+  }
+
+  loop() async {
+      outer:
+      do {
+        SmtpCommand message = SmtpCommand("none","");
+        try {
+          message = await SmtpCommand.decode(parser);
+        } catch(e){
+        }
+        print("##"+message.name);
+        switch(message.name){
+          case "helo":
+            channelIsOpen = false;
+            hostname = message.value.trim();
+            if(hostname.length > 0){
+              channelIsOpen = true;
+              socket.add(utf8.encode("250 ok ${domainName}\r\n"));
+            } else {
+              socket.add(utf8.encode("501 Syntax error\r\n"));
+            }
+            break;
+          case "quit":
+            this.channelIsOpen = false;
+            socket.add(utf8.encode("250 ok\r\n"));
+            break outer;
+          case "mail":
+            if(message.valueFromKey("from").length > 0){
+              this.fromAddress = message.valueFromKey("from");
+              socket.add(utf8.encode("250 ok ${this.fromAddress}\r\n"));
+            } else {
+              socket.add(utf8.encode("501 Syntax error\r\n"));
+            }
+            break;
+          case "rcpt":
+            if(message.valueFromKey("to").length > 0){
+              this.toAddress = message.valueFromKey("to");
+              socket.add(utf8.encode("250 ok ${this.toAddress}\r\n"));
+            } else {
+              socket.add(utf8.encode("501 Syntax error\r\n"));
+            }
+            break;
+          case "data":
+            socket.add(utf8.encode("354 End data with <CR><LF>.<CR><LF>\r\n"));
+            data = await SmtpDataCommand.decodeDataContent(parser);
+            break;
+          case "none":
+            socket.add(utf8.encode("500 Syntax error, command unrecognized\r\n"));
+            break;
+          default:
+            socket.add(utf8.encode("502 Command not implemented\r\n"));          
+            break;
+        }
+      } while(true);
   }
 
 }
