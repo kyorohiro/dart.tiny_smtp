@@ -56,13 +56,13 @@ class SmtpSession {
   start() async {
     socket.add(utf8.encode("220 ${domainName} SMTP dart.smtp@kyorohiro\r\n"));
     do {
-      SmtpMessage message = SmtpMessage()..action="none"..value="";
+      SmtpCommand message = SmtpCommand("none","");
       try {
-        message = await SmtpMessage.decode(parser);
+        message = await SmtpCommand.decode(parser);
       } catch(e){
       }
-      print("##"+message.action);
-      switch(message.action){
+      print("##"+message.name);
+      switch(message.name){
         case "helo":
           channelIsOpen = false;
           hostname = message.value.trim();

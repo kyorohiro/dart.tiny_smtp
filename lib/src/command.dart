@@ -7,17 +7,32 @@ import 'dart:convert' show utf8;
 
 typedef decodeFunc (TinyParser p);
 
-class SmtpMessage {
-  String action;
-  String value;
+class SmtpCommand {
+  String _name;
+  String _value;
 
-  SmtpMessage(){
+  String get name => _name;
+  String get value => _value;
+  Map<String,String> keyValue = new Map<String,String>();
+
+  SmtpCommand(this._name, this._value){
+    this._name = this._name.trim();
+    this._value = this._value.trim();
+
+    if(this._value.contains(":")){
+      List<String> pat = this._value.split(":");
+      if(pat.length%2 == 0) {
+        for(int i=0;i<pat.length;i+=2) {
+          keyValue[pat[i]] = pat[i+1];
+        }
+      }
+    }
   }
 
-  static Future<SmtpMessage> decode(TinyParser parser) async {
+  static Future<SmtpCommand> decode(TinyParser parser) async {
     try {
       parser.push();
-      return await SmtpMessage._decodeBase(parser);
+      return await SmtpCommand._decodeBase(parser);
     } catch (e) {
       parser.back();
     }finally {
@@ -41,7 +56,7 @@ class SmtpMessage {
   // QUIT <CRLF>
   // TURN <CRLF>
   // TURN <CRLF>
-  static Future<SmtpMessage> _decodeBase(TinyParser parser) async {
+  static Future<SmtpCommand> _decodeBase(TinyParser parser) async {
     String action = "";
     String value = "";
 
@@ -51,9 +66,7 @@ class SmtpMessage {
       value = await decodeByCRLF(parser);
     }
     await decodeCRLF(parser);
-    return new SmtpMessage()
-      ..action = action.toLowerCase()
-      ..value = value;
+    return new SmtpCommand (action.toLowerCase().trim(),value);
   }
 
   static Future<String> decodeCRLF(TinyParser parser) async {

@@ -13,39 +13,39 @@ void main() {
     test.test('HELO', () async {
       tiny.ParserReader reader = new tiny.ParserByteBuffer.fromList(utf8.encode("HELO google.com\r\n"), true);
       tiny.TinyParser parser = new tiny.TinyParser(reader);
-      smtp.SmtpMessage message = await smtp.SmtpMessage.decode(parser);
+      smtp.SmtpCommand message = await smtp.SmtpCommand.decode(parser);
       test.expect(message.value, "google.com");
-      test.expect(message.action, "helo");
+      test.expect(message.name, "helo");
     });
 
     test.test('EHLO', () async {
         tiny.ParserReader reader = new tiny.ParserByteBuffer.fromList(utf8.encode("EHLO google.com\r\n"), true);
         tiny.TinyParser parser = new tiny.TinyParser(reader);
-        smtp.SmtpMessage message = await smtp.SmtpMessage.decode(parser);
+        smtp.SmtpCommand message = await smtp.SmtpCommand.decode(parser);
         test.expect(message.value, "google.com");
-        test.expect(message.action, "ehlo");
+        test.expect(message.name, "ehlo");
     });
 
     test.test('QUIT', () async {
         tiny.ParserReader reader = new tiny.ParserByteBuffer.fromList(utf8.encode("QUIT\r\n"), true);
         tiny.TinyParser parser = new tiny.TinyParser(reader);
-        smtp.SmtpMessage message = await smtp.SmtpMessage.decode(parser);
+        smtp.SmtpCommand message = await smtp.SmtpCommand.decode(parser);
         test.expect(message.value, "");
-        test.expect(message.action, "quit");
+        test.expect(message.name, "quit");
     });
 
     test.test('QUIT Fuzzy', () async {
         tiny.ParserReader reader = new tiny.ParserByteBuffer.fromList(utf8.encode("QUIT \r\n"), true);
         tiny.TinyParser parser = new tiny.TinyParser(reader);
-        smtp.SmtpMessage message = await smtp.SmtpMessage.decode(parser);
+        smtp.SmtpCommand message = await smtp.SmtpCommand.decode(parser);
         test.expect(message.value, "");
-        test.expect(message.action, "quit");
+        test.expect(message.name, "quit");
     });
 
     test.test('\r\n.\r\n', () async {
         tiny.ParserReader reader = new tiny.ParserByteBuffer.fromList(utf8.encode("xxxx\r\nyyyy\r\n.\r\nxx"), true);
         tiny.TinyParser parser = new tiny.TinyParser(reader);
-        List<int> data = await smtp.SmtpMessage.decodeDataContent(parser);
+        List<int> data = await smtp.SmtpCommand.decodeDataContent(parser);
         test.expect(utf8.decode(data), "xxxx\r\nyyyy");
     });
     
@@ -53,12 +53,12 @@ void main() {
       tiny.ParserByteBuffer reader = new tiny.ParserByteBuffer();
       tiny.TinyParser parser = new tiny.TinyParser(reader);
       
-      smtp.SmtpMessage message;
-      smtp.SmtpMessage.decode(parser).then((m){message = m;});
+      smtp.SmtpCommand message;
+      smtp.SmtpCommand.decode(parser).then((m){message = m;});
       reader.addBytes(utf8.encode("HELO google.com\r\n"));
       await new Future((){});
       test.expect(message.value, "google.com");
-      test.expect(message.action, "helo");
+      test.expect(message.name, "helo");
     });
   });
 }

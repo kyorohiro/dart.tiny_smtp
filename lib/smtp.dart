@@ -1,4 +1,4 @@
 library smtp;
 
-export 'src/message.dart';
+export 'src/command.dart';
 
