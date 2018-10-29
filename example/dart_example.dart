@@ -43,6 +43,7 @@ class SmtpSession {
 
   bool channelIsOpen = false;
   String hostname;
+  String fromAddress;
 
 
   SmtpSession(this.socket,{this.domainName:"kyorohiro.info"}) {
@@ -74,6 +75,12 @@ class SmtpSession {
           }
           break;
         case "mail":
+          if(message.valueFromKey("from").length > 0){
+            this.fromAddress = message.valueFromKey("from");
+            socket.add(utf8.encode("250 ok ${this.fromAddress}\r\n"));
+          } else {
+            socket.add(utf8.encode("501 Syntax error\r\n"));
+          }
           break;
         
         case "data":

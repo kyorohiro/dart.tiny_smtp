@@ -13,20 +13,24 @@ class SmtpCommand {
 
   String get name => _name;
   String get value => _value;
-  Map<String,String> keyValue = new Map<String,String>();
+  Map<String,String> _keyValue = new Map<String,String>();
+  String valueFromKey(String key) {
+    return (_keyValue[key] == null?"":_keyValue[key]);
+  }
+  List<String> get keys => _keyValue.keys;
 
   SmtpCommand(this._name, this._value){
     this._name = this._name.trim();
     this._value = this._value.trim();
-
+/*
     if(this._value.contains(":")){
       List<String> pat = this._value.split(":");
       if(pat.length%2 == 0) {
         for(int i=0;i<pat.length;i+=2) {
-          keyValue[pat[i]] = pat[i+1];
+          _keyValue[pat[i].trim().toLowerCase()] = pat[i+1].trim();
         }
       }
-    }
+    }*/
   }
 
   static Future<SmtpCommand> decode(TinyParser parser) async {
@@ -79,11 +83,11 @@ class SmtpCommand {
       try {
         parser.push();
         if(0xd == await parser.readByte() && 0xa == await parser.readByte()){
-          parser.back();
           break;
         }
       } catch(e){
       } finally {
+        parser.back();
         parser.pop();
       }
       await parser.getBytes(1);

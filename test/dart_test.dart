@@ -18,6 +18,14 @@ void main() {
       test.expect(message.name, "helo");
     });
 
+   test.test('HELO 2', () async {
+      tiny.ParserReader reader = new tiny.ParserByteBuffer.fromList(utf8.encode("HELO xxx\r\n"), true);
+      tiny.TinyParser parser = new tiny.TinyParser(reader);
+      smtp.SmtpCommand message = await smtp.SmtpCommand.decode(parser);
+      test.expect(message.value, "xxx");
+      test.expect(message.name, "helo");
+    });
+
     test.test('EHLO', () async {
         tiny.ParserReader reader = new tiny.ParserByteBuffer.fromList(utf8.encode("EHLO google.com\r\n"), true);
         tiny.TinyParser parser = new tiny.TinyParser(reader);
