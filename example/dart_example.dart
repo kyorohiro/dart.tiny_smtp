@@ -36,12 +36,16 @@ class SmtpSocket {
 
 class SmtpSession {
 
-  String hostname;
+  String domainName;
   SmtpSocket socket;
   p.TinyParser parser;
   p.ParserByteBuffer buffer;
 
-  SmtpSession(this.socket,{this.hostname:"kyorohiro.info"}) {
+  bool channelIsOpen = false;
+  String hostname;
+
+
+  SmtpSession(this.socket,{this.domainName:"kyorohiro.info"}) {
     parser = new p.TinyParser(buffer = new p.ParserByteBuffer());
     socket.input.listen((List<int> data){
       print(">>"+utf8.decode(data)+"<<");
@@ -50,7 +54,7 @@ class SmtpSession {
   }
 
   start() async {
-    socket.add(utf8.encode("220 ${hostname} SMTP dart.smtp@kyorohiro\r\n"));
+    socket.add(utf8.encode("220 ${domainName} SMTP dart.smtp@kyorohiro\r\n"));
     do {
       SmtpMessage message = SmtpMessage()..action="none"..value="";
       try {
@@ -59,6 +63,19 @@ class SmtpSession {
       }
       print("##"+message.action);
       switch(message.action){
+        case "helo":
+          channelIsOpen = false;
+          hostname = message.value.trim();
+          if(hostname.length > 0){
+            channelIsOpen = true;
+            socket.add(utf8.encode("250 ${domainName}\r\n"));
+          } else {
+            socket.add(utf8.encode("501 Syntax error\r\n"));
+          }
+          break;
+        case "mail":
+          break;
+        
         case "data":
           break;
         case "none":
