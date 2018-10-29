@@ -22,7 +22,7 @@ class SmtpCommand {
   SmtpCommand(this._name, this._value){
     this._name = this._name.trim();
     this._value = this._value.trim();
-/*
+
     if(this._value.contains(":")){
       List<String> pat = this._value.split(":");
       if(pat.length%2 == 0) {
@@ -30,7 +30,7 @@ class SmtpCommand {
           _keyValue[pat[i].trim().toLowerCase()] = pat[i+1].trim();
         }
       }
-    }*/
+    }
   }
 
   static Future<SmtpCommand> decode(TinyParser parser) async {
@@ -120,6 +120,9 @@ class SmtpCommand {
     return utf8.decode(await parser.buffer.getBytes(index,parser.index-index),allowMalformed: true);
   }
 
+}
+
+class SmtpDataCommand {
   static Future<List<int>> decodeDataContent(TinyParser parser) async {
     List<int> tmp = List<int>(5);
     int start = parser.index;

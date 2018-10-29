@@ -44,6 +44,7 @@ class SmtpSession {
   bool channelIsOpen = false;
   String hostname;
   String fromAddress;
+  String toAddress;
 
 
   SmtpSession(this.socket,{this.domainName:"kyorohiro.info"}) {
@@ -69,10 +70,14 @@ class SmtpSession {
           hostname = message.value.trim();
           if(hostname.length > 0){
             channelIsOpen = true;
-            socket.add(utf8.encode("250 ${domainName}\r\n"));
+            socket.add(utf8.encode("250 ok ${domainName}\r\n"));
           } else {
             socket.add(utf8.encode("501 Syntax error\r\n"));
           }
+          break;
+        case "quit":
+          this.channelIsOpen = false;
+          socket.add(utf8.encode("250 ok\r\n"));
           break;
         case "mail":
           if(message.valueFromKey("from").length > 0){
@@ -82,8 +87,17 @@ class SmtpSession {
             socket.add(utf8.encode("501 Syntax error\r\n"));
           }
           break;
-        
+        case "rcpt":
+          if(message.valueFromKey("to").length > 0){
+            this.toAddress = message.valueFromKey("to");
+            socket.add(utf8.encode("250 ok ${this.toAddress}\r\n"));
+          } else {
+            socket.add(utf8.encode("501 Syntax error\r\n"));
+          }
+          break;
         case "data":
+          socket.add(utf8.encode("354 End data with <CR><LF>.<CR><LF>\r\n"));
+          SmtpDataCommand.decodeDataContent(parser);
           break;
         case "none":
           socket.add(utf8.encode("500 Syntax error, command unrecognized\r\n"));

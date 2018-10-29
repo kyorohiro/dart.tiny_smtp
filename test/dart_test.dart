@@ -53,7 +53,7 @@ void main() {
     test.test('\r\n.\r\n', () async {
         tiny.ParserReader reader = new tiny.ParserByteBuffer.fromList(utf8.encode("xxxx\r\nyyyy\r\n.\r\nxx"), true);
         tiny.TinyParser parser = new tiny.TinyParser(reader);
-        List<int> data = await smtp.SmtpCommand.decodeDataContent(parser);
+        List<int> data = await smtp.SmtpDataCommand.decodeDataContent(parser);
         test.expect(utf8.decode(data), "xxxx\r\nyyyy");
     });
     
