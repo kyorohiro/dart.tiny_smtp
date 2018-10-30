@@ -1,5 +1,7 @@
 import 'package:test/test.dart' as test;
 import 'package:dart.smtp/dartio.smtp.dart' as smtp;
+import 'package:dart.smtp/smtp.dart' as smtp;
+
 import 'package:tiny_parser/parser.dart' as tiny;
 import 'dart:convert' show utf8;
 import 'dart:async' show Future;

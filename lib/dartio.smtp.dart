@@ -1,13 +1,11 @@
 library smtp;
 
-export 'smtp.dart';
-
-
-import 'package:dart.smtp/smtp.dart';
 import 'dart:io' as io;
 import 'dart:async' show Stream, Future;
 
-class DartIOSmtpSocket implements SmtpSocket{
+import 'smtp.dart';
+
+class DartIOSmtpSocket implements SmtpSocket {
   io.Socket socket;
   DartIOSmtpSocket(this.socket) {}
   Stream<List<int>> get input => socket;
@@ -27,13 +25,7 @@ class SimpleSmtpClient {
     this.socket = await io.Socket.connect(host, port);
   }
 
-  Future<dynamic> sendMessage(List<int> message) async {
-    return await this.socket.add(message);
-  }
 
-  Future<List<int>> receiveResponse() async {
-    return ;
-  }
 
   Future<dynamic> start() async {
     if(this.socket == null) {
@@ -57,8 +49,9 @@ class SimpleSmtpServer {
   Future<dynamic> start() async {
   server = await io.ServerSocket.bind("0.0.0.0", 2525);
     server.listen((io.Socket socket) {
-      SmtpSession session = new SmtpSession(DartIOSmtpSocket(socket));
-      session.start();
+      SmtpSocket smtpSocket = new DartIOSmtpSocket(socket);
+      SmtpServerSession session = new SmtpServerSession(smtpSocket);
+      session.startServer();
     });
   }
 

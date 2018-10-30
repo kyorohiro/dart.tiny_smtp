@@ -1,4 +1,5 @@
 import 'package:dart.smtp/dartio.smtp.dart';
+import 'package:dart.smtp/smtp.dart';
 import 'dart:io' as io;
 
 main() async {
@@ -10,8 +11,8 @@ main() async {
 
   io.ServerSocket server = await io.ServerSocket.bind("0.0.0.0", 2525);
   server.listen((io.Socket socket) {
-     SmtpSession session = new SmtpSession(DartIOSmtpSocket(socket));
-     session.start();
+     SmtpServerSession session = new SmtpServerSession(new DartIOSmtpSocket(socket));
+     session.startServer();
   });
 
   

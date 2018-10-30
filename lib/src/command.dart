@@ -5,46 +5,6 @@ import 'dart:async' show StreamController;
 import 'dart:convert' show utf8;
 
 
-typedef decodeFunc (TinyParser p);
-
-class SmtpCommand {
-  String _name;
-  String _value;
-
-  String get name => _name;
-  String get value => _value;
-  Map<String,String> _keyValue = new Map<String,String>();
-  String valueFromKey(String key) {
-    return (_keyValue[key] == null?"":_keyValue[key]);
-  }
-  List<String> get keys => _keyValue.keys;
-
-  SmtpCommand(this._name, this._value){
-    this._name = this._name.trim();
-    this._value = this._value.trim();
-
-    if(this._value.contains(":")){
-      List<String> pat = this._value.split(":");
-      if(pat.length%2 == 0) {
-        for(int i=0;i<pat.length;i+=2) {
-          _keyValue[pat[i].trim().toLowerCase()] = pat[i+1].trim();
-        }
-      }
-    }
-  }
-
-  static Future<SmtpCommand> decode(TinyParser parser) async {
-    try {
-      parser.push();
-      return await SmtpCommand._decodeBase(parser);
-    } catch (e) {
-      parser.back();
-    }finally {
-      parser.pop();
-    }
-    throw "";
-  }
-
   // HELO <SP> <domain> <CRLF>
   // MAIL <SP> FROM:<reverse-path> <CRLF>
   // RCPT <SP> TO:<forward-path> <CRLF>
@@ -60,7 +20,81 @@ class SmtpCommand {
   // QUIT <CRLF>
   // TURN <CRLF>
   // TURN <CRLF>
-  static Future<SmtpCommand> _decodeBase(TinyParser parser) async {
+class SmtpCommand {
+  String _name;
+  String _value;
+
+  String get name => _name;
+  String get value => _value;
+
+  Map<String,String> _keyValue = new Map<String,String>();
+  List<String> get keys => _keyValue.keys;
+  String valueFromKey(String key) {
+    return (_keyValue[key] == null?"":_keyValue[key]);
+  }
+
+  SmtpCommand(this._name, this._value) : super() {
+    if(this._value.contains(":")){
+      List<String> pat = this._value.split(":");
+      if(pat.length%2 == 0) {
+        for(int i=0;i<pat.length;i+=2) {
+          _keyValue[pat[i].trim().toLowerCase()] = pat[i+1].trim();
+        }
+      }
+    }    
+  }
+
+  static Future<SmtpCommand> decode(TinyParser parser) async {
+    try {
+      parser.push();
+      SmtpData data =  await SmtpData.decodeBase(parser);
+      return new SmtpCommand(data.name, data.value);
+    } catch (e) {
+      parser.back();
+    }finally {
+      parser.pop();
+    }
+    throw "";
+  }
+}
+
+class SmtpResponse {
+  String _name;
+  String _value;
+
+  String get name => _name;
+  String get value => _value;
+
+  SmtpResponse(this._name, this._value) : super() {
+  }
+
+  static Future<SmtpCommand> decode(TinyParser parser) async {
+    try {
+      parser.push();
+      SmtpData data =  await SmtpData.decodeBase(parser);
+      return new SmtpCommand(data.name, data.value);
+    } catch (e) {
+      parser.back();
+    }finally {
+      parser.pop();
+    }
+    throw "";
+  }
+}
+
+class SmtpData {
+  String _name;
+  String _value;
+
+  String get name => _name;
+  String get value => _value;
+
+  SmtpData(this._name, this._value){
+    this._name = this._name.trim();
+    this._value = this._value.trim();
+  }
+
+  static Future<SmtpData> decodeBase(TinyParser parser) async {
     String action = "";
     String value = "";
 
@@ -70,7 +104,7 @@ class SmtpCommand {
       value = await decodeByCRLF(parser);
     }
     await decodeCRLF(parser);
-    return new SmtpCommand (action.toLowerCase().trim(),value);
+    return new SmtpData(action.toLowerCase().trim(),value);
   }
 
   static Future<String> decodeCRLF(TinyParser parser) async {
@@ -119,7 +153,6 @@ class SmtpCommand {
     }
     return utf8.decode(await parser.buffer.getBytes(index,parser.index-index),allowMalformed: true);
   }
-
 }
 
 class SmtpDataCommand {
