@@ -1,16 +1,8 @@
 import 'package:dart.smtp/smtp.dart';
-import 'dart:io' as io;
 import 'dart:async' show Stream, Future;
 import 'package:tiny_parser/parser.dart' as p;
 import 'dart:convert' show utf8; 
 
-class DartIOSmtpSocket implements SmtpSocket{
-  io.Socket socket;
-  DartIOSmtpSocket(this.socket) {}
-  Stream<List<int>> get input => socket;
-  void add(List<int> data) { socket.add(data);}
-  Future<dynamic> close() { return socket.close();}
-}
 
 abstract class SmtpSocket {
   Stream<List<int>> get input;
@@ -43,13 +35,13 @@ class SmtpSession {
   start() async {
     try {
       socket.add(utf8.encode("220 ${domainName} SMTP dart.smtp@kyorohiro\r\n"));
-      await loop();
+      await onLoop();
     } finally {
       socket.close();
     }
   }
 
-  loop() async {
+  onLoop() async {
       outer:
       do {
         SmtpCommand message = SmtpCommand("none","");
@@ -93,9 +85,24 @@ class SmtpSession {
             socket.add(utf8.encode("354 End data with <CR><LF>.<CR><LF>\r\n"));
             data = await SmtpDataCommand.decodeDataContent(parser);
             break;
+          case "reset":
+            hostname = "";
+            fromAddress = "";
+            toAddress = "";
+            data.clear();
+            socket.add(utf8.encode("250 ok \r\n"));
+            break;
+          case "noop":
+          case "help":
+            socket.add(utf8.encode("250 ok \r\n"));
+            break;
           case "none":
             socket.add(utf8.encode("500 Syntax error, command unrecognized\r\n"));
             break;
+          case "send":
+          case "soml":
+          case "saml":
+          case "turn":
           default:
             socket.add(utf8.encode("502 Command not implemented\r\n"));          
             break;

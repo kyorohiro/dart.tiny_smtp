@@ -1,4 +1,4 @@
-import 'package:dart.smtp/smtp.dart';
+import 'package:dart.smtp/dartio.smtp.dart';
 import 'dart:io' as io;
 
 main() async {
