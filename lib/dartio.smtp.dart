@@ -17,25 +17,30 @@ class SimpleSmtpClient {
   io.Socket socket;
   String host;
   int port;
+  SmtpClientSession session;
 
-  SimpleSmtpClient(this.host, {this.port:25}) {
+  SimpleSmtpClient({this.host="kyorohiro.info", this.port:25}) {
   }
 
   Future<dynamic> connect() async {
+    print(">>> socket#connect s");
     this.socket = await io.Socket.connect(host, port);
+    print(">>> socket#connect e");
+    session = new SmtpClientSession(new DartIOSmtpSocket(socket));
   }
-
-
 
   Future<dynamic> start() async {
     if(this.socket == null) {
       await connect();
     }
-    //..
   }
 
-  Future<dynamic> stop() async {
-    var o = await socket.close();
+  Future<dynamic> close() async {
+    var o;
+    if(this.socket != null) {
+      print(">>> socket#close");
+      o = await socket.close();
+    }
     socket = null;
     return o;
   }

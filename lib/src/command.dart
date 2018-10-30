@@ -68,11 +68,11 @@ class SmtpResponse {
   SmtpResponse(this._name, this._value) : super() {
   }
 
-  static Future<SmtpCommand> decode(TinyParser parser) async {
+  static Future<SmtpResponse> decode(TinyParser parser) async {
     try {
       parser.push();
       SmtpData data =  await SmtpData.decodeBase(parser);
-      return new SmtpCommand(data.name, data.value);
+      return new SmtpResponse(data.name, data.value);
     } catch (e) {
       parser.back();
     }finally {

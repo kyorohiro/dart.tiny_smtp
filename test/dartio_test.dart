@@ -22,14 +22,23 @@ void main() {
       await server.stop();
       print("call e tearDown");
     });
-
     test.test('HELO', () async {
       print("call s test");
-      tiny.ParserReader reader = new tiny.ParserByteBuffer.fromList(utf8.encode("HELO google.com\r\n"), true);
-      tiny.TinyParser parser = new tiny.TinyParser(reader);
-      smtp.SmtpCommand message = await smtp.SmtpCommand.decode(parser);
-      test.expect(message.value, "google.com");
-      test.expect(message.name, "helo");
+      
+      smtp.SimpleSmtpClient client = new smtp.SimpleSmtpClient(host: "0.0.0.0", port: 2525);
+      await client.connect();
+      
+      smtp.SmtpResponse response = null;
+      response =  await client.session.receiveResponse();
+      print("### 1 # ${response.name} ${response.value}");
+
+      await client.session.sendMessage(utf8.encode("HELO xxxxx\r\n"));
+      response = await client.session.receiveResponse();
+
+      print("### 2 # ${response.name} ${response.value}");
+      
+      await client.close();
+      
       print("call e test");
     });
 

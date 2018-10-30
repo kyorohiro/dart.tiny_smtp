@@ -24,7 +24,7 @@ class SmtpServerSession {
     socket.input.listen((List<int> data){
       print(">>"+utf8.decode(data, allowMalformed: true)+"<<");
       buffer.addBytes(data);
-    });
+    }, onDone: (){socket.close();}, onError: (e){socket.close();});
   }
 
   Future<dynamic> sendMessage(List<int> message) async {
@@ -40,13 +40,16 @@ class SmtpServerSession {
       return message;
   }
 
-  start() async {    
+  start() async { 
+    print("server_session#start --1--");
     mode = SmtpSessionMode.server; 
     try {
       socket.add(utf8.encode("220 ${domainName} SMTP dart.smtp@kyorohiro\r\n"));
       await  onServerLoop();
+      print("server_session#start --2--");
     } catch(e){
     } finally {
+      print("server_session#start --3--");
       socket.close();
     }
   }
