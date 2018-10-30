@@ -23,7 +23,7 @@ class SmtpClientSession {
   SmtpClientSession(this.socket,{this.domainName:"kyorohiro.info"}) {
     parser = new p.TinyParser(buffer = new p.ParserByteBuffer());
     socket.input.listen((List<int> data){
-      print(">>"+utf8.decode(data)+"<<");
+      print(">>"+utf8.decode(data, allowMalformed: true)+"<<");
       buffer.addBytes(data);
     });
   }
