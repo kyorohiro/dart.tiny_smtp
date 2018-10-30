@@ -31,11 +31,16 @@ class SmtpServerSession {
     return await this.socket.add(message);
   }
 
-  Future<List<int>> receiveResponse() async {
-    return null;
+  Future<SmtpCommand> receiveResponse() async {
+      SmtpCommand message = SmtpCommand("none","");
+      try {
+        message = await SmtpCommand.decode(parser);
+      } catch(e){
+      }
+      return message;
   }
 
-  startServer() async {    
+  start() async {    
     mode = SmtpSessionMode.server; 
     try {
       socket.add(utf8.encode("220 ${domainName} SMTP dart.smtp@kyorohiro\r\n"));
@@ -50,11 +55,10 @@ class SmtpServerSession {
   Future<SmtpSessionMode> onServerLoop() async {
       outer:
       do {
-        SmtpCommand message = SmtpCommand("none","");
-        try {
-          message = await SmtpCommand.decode(parser);
-        } catch(e){
-        }
+        //
+        SmtpCommand message = await receiveResponse();
+
+        //
         print("##"+message.name);
         switch(message.name){
           case "helo":
@@ -62,29 +66,29 @@ class SmtpServerSession {
             hostname = message.value.trim();
             if(hostname.length > 0){
               channelIsOpen = true;
-              socket.add(utf8.encode("250 ok ${domainName}\r\n"));
+              sendMessage(utf8.encode("250 ok ${domainName}\r\n"));
             } else {
-              socket.add(utf8.encode("501 Syntax error\r\n"));
+              sendMessage(utf8.encode("501 Syntax error\r\n"));
             }
             break;
           case "quit":
             this.channelIsOpen = false;
-            socket.add(utf8.encode("250 ok\r\n"));
+            sendMessage(utf8.encode("250 ok\r\n"));
             break outer;
           case "mail":
             if(message.valueFromKey("from").length > 0){
               this.fromAddress = message.valueFromKey("from");
-              socket.add(utf8.encode("250 ok ${this.fromAddress}\r\n"));
+              sendMessage(utf8.encode("250 ok ${this.fromAddress}\r\n"));
             } else {
-              socket.add(utf8.encode("501 Syntax error\r\n"));
+              sendMessage(utf8.encode("501 Syntax error\r\n"));
             }
             break;
           case "rcpt":
             if(message.valueFromKey("to").length > 0){
               this.toAddress = message.valueFromKey("to");
-              socket.add(utf8.encode("250 ok ${this.toAddress}\r\n"));
+              sendMessage(utf8.encode("250 ok ${this.toAddress}\r\n"));
             } else {
-              socket.add(utf8.encode("501 Syntax error\r\n"));
+              sendMessage(utf8.encode("501 Syntax error\r\n"));
             }
             break;
           case "data":
@@ -96,14 +100,14 @@ class SmtpServerSession {
             fromAddress = "";
             toAddress = "";
             data.clear();
-            socket.add(utf8.encode("250 ok \r\n"));
+            sendMessage(utf8.encode("250 ok \r\n"));
             break;
           case "noop":
           case "help":
-            socket.add(utf8.encode("250 ok \r\n"));
+            sendMessage(utf8.encode("250 ok \r\n"));
             break;
           case "none":
-            socket.add(utf8.encode("500 Syntax error, command unrecognized\r\n"));
+            sendMessage(utf8.encode("500 Syntax error, command unrecognized\r\n"));
             break;
           case "turn":
             //socket.add(utf8.encode("250 ok \r\n"));
@@ -112,7 +116,7 @@ class SmtpServerSession {
           case "soml":
           case "saml":
           default:
-            socket.add(utf8.encode("502 Command not implemented\r\n"));          
+            sendMessage(utf8.encode("502 Command not implemented\r\n"));          
             break;
         }
       } while(true);

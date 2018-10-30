@@ -51,7 +51,7 @@ class SimpleSmtpServer {
     server.listen((io.Socket socket) {
       SmtpSocket smtpSocket = new DartIOSmtpSocket(socket);
       SmtpServerSession session = new SmtpServerSession(smtpSocket);
-      session.startServer();
+      session.start();
     });
   }
 

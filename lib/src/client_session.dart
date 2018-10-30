@@ -32,8 +32,13 @@ class SmtpClientSession {
     return await this.socket.add(message);
   }
 
-  Future<List<int>> receiveResponse() async {
-    return null;
+  Future<SmtpCommand> receiveResponse() async {
+      SmtpCommand message = SmtpCommand("none","");
+      try {
+        message = await SmtpCommand.decode(parser);
+      } catch(e){
+      }
+      return message;
   }
 
   startServer() async {    

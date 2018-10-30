@@ -12,7 +12,7 @@ main() async {
   io.ServerSocket server = await io.ServerSocket.bind("0.0.0.0", 2525);
   server.listen((io.Socket socket) {
      SmtpServerSession session = new SmtpServerSession(new DartIOSmtpSocket(socket));
-     session.startServer();
+     session.start();
   });
 
   
