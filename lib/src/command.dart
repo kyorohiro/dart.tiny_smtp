@@ -59,13 +59,13 @@ class SmtpCommand {
 }
 
 class SmtpResponse {
-  String _name;
-  String _value;
+  String _code;
+  String _message;
 
-  String get name => _name;
-  String get value => _value;
+  String get code => _code;
+  String get message => _message;
 
-  SmtpResponse(this._name, this._value) : super() {
+  SmtpResponse(this._code, this._message) : super() {
   }
 
   static Future<SmtpResponse> decode(TinyParser parser) async {

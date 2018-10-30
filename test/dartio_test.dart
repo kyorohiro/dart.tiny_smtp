@@ -30,12 +30,13 @@ void main() {
       
       smtp.SmtpResponse response = null;
       response =  await client.session.receiveResponse();
-      print("### 1 # ${response.name} ${response.value}");
+      test.expect(response.code, "220");
+      print("### 1 # ${response.code} ${response.message}");
 
       await client.session.sendMessage(utf8.encode("HELO xxxxx\r\n"));
       response = await client.session.receiveResponse();
 
-      print("### 2 # ${response.name} ${response.value}");
+      print("### 2 # ${response.code} ${response.message}");
       
       await client.close();
       
